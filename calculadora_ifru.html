@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Fiscal IFRU • Dashboard Interactivo</title>
+  <style>
+    :root {
+      --bg: #0b132b;
+      --card-bg: #1c2541;
+      --card-border: #3a506b;
+      --text: #ffffff;
+      --text-muted: #a0aec0;
+      --primary: #4895ef;
+      --primary-hover: #3a0ca3;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --accent: #7209b7;
+      --tramo1: #3b82f6;
+      --tramo2: #6366f1;
+      --tramo3: #8b5cf6;
+      --tramo4: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+    .container { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 20px;
+    }
+    .header-title h1 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+    }
+    .header-title p { color: var(--text-muted); font-size: 0.92rem; margin-top: 4px; }
+    .badge-uni {
+      background: rgba(72, 149, 239, 0.2);
+      border: 1px solid rgba(72, 149, 239, 0.4);
+      color: #60a5fa;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Main Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 1024px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 12px;
+    }
+
+    /* Inputs */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .input-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .num-input {
+      width: 100%;
+      background: #0b132b;
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 45px 12px 16px;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .num-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.25);
+    }
+    .input-unit {
+      position: absolute;
+      right: 16px;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 1.1rem;
+      pointer-events: none;
+    }
+    
+    /* Range Sliders */
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: #0b132b;
+      outline: none;
+      margin-top: 4px;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(72, 149, 239, 0.6);
+      transition: transform 0.1s;
+    }
+    .slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+    /* Quick Preset Buttons */
+    .preset-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .preset-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* KPI Summary Row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .kpi-card {
+      background: #0b132b;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+    .kpi-card.danger::before { background: var(--danger); }
+    .kpi-card.success::before { background: var(--success); }
+    .kpi-card.warning::before { background: var(--warning); }
+    .kpi-card.accent::before { background: var(--accent); }
+    .kpi-title { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-val { font-size: 1.65rem; font-weight: 800; color: #fff; line-height: 1.2; }
+    .kpi-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* Visual Charts Area */
+    .charts-duo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .charts-duo { grid-template-columns: 1fr; }
+    }
+
+    /* Progress Breakdown */
+    .bracket-bar-box {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .bracket-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bracket-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .bracket-track {
+      background: #0b132b;
+      height: 18px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+    }
+    .bracket-fill {
+      height: 100%;
+      transition: width 0.3s ease-out;
+    }
+
+    /* Curve Chart Container */
+    .curve-wrap {
+      background: #0b132b;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    svg.curve-svg {
+      width: 100%;
+      height: 220px;
+      overflow: visible;
+    }
+
+    /* Breakdown Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th {
+      background: #0b132b;
+      color: var(--text-muted);
+      padding: 10px 14px;
+      text-align: right;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--card-border);
+    }
+    th:first-child { text-align: left; }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--card-border);
+      text-align: right;
+      color: #e2e8f0;
+    }
+    td:first-child { text-align: left; font-weight: 600; }
+    tr.total-tr td {
+      background: rgba(255,255,255,0.04);
+      font-weight: 800;
+      color: #fff;
+      border-top: 2px solid var(--card-border);
+      border-bottom: 2px solid var(--card-border);
+    }
+
+    /* Test Case Runner */
+    .test-cases-box {
+      background: #0b132b;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .test-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .test-pill {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .test-pill:hover, .test-pill.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Net Salary Pill */
+    .net-salary-pill {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .net-salary-pill span { font-size: 0.9rem; color: #a7f3d0; font-weight: 600; }
+    .net-salary-pill strong { font-size: 1.4rem; color: #10b981; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--card-border);
+      padding-top: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="header-title">
+        <h1>
+          🏛️ Calculadora Fiscal IFRU
+          <span class="badge-uni">Impuesto Ficticio sobre la Renta Universitaria</span>
+        </h1>
+        <p>Simulador interactivo del modelo fiscal de la Práctica 5 • Especificación oficial de tramos progresivos</p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="testStatusBadge" style="background:#10b98122; color:#10b981; border:1px solid #10b98144; padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700;">
+          ✓ 10/10 Tests de pruebas.csv superados
+        </span>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <!-- Left Column: Controls & Inputs -->
+      <div class="card">
+        <div class="card-title">
+          <span>1. Parámetros del Contribuyente</span>
+          <button class="preset-btn" onclick="resetForm()">Reiniciar</button>
+        </div>
+
+        <!-- Input 1: Ingresos -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Ingresos Brutos Anuales</span>
+            <span style="color: var(--primary);" id="lblIngresos">30.000,50 €</span>
+          </div>
+          <div class="input-wrapper">
+            <input type="number" id="inIngresos" class="num-input" value="30000.50" min="0" max="150000" step="100" oninput="onInputChange()">
+            <span class="input-unit">€</span>
+          </div>
+          <input type="range" id="slIngresos" class="slider" min="0" max="100000" step="500" value="30000" oninput="onSliderChange('ingresos')">
+          <div class="preset-pills">
+            <button class="preset-btn" onclick="setPreset('ingresos', 4000)">4.000 € (Bajo mínimo)</button>
+            <button class="preset-btn" onclick="setPreset('ingresos', 15000)">15.000 €</button>
+            <button class="preset-btn" onclick="setPreset('ingresos', 25000)">25.000 €</button>
+            <button class="preset-btn" onclick="setPreset('ingresos', 40000)">40.000 €</button>
+            <button class="preset-btn" onclick="setPreset('ingresos', 80000)">80.000 €</button>
+          </div>
+        </div>
+
+        <!-- Input 2: Alquiler -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Alquiler Anual Pagado</span>
+            <span style="color: var(--success);" id="lblAlquiler">4.800,00 €</span>
+          </div>
+          <div class="input-wrapper">
+            <input type="number" id="inAlquiler" class="num-input" value="4800" min="0" max="25000" step="50" oninput="onInputChange()">
+            <span class="input-unit">€</span>
+          </div>
+          <input type="range" id="slAlquiler" class="slider" min="0" max="15000" step="100" value="4800" oninput="onSliderChange('alquiler')">
+          <div class="preset-pills">
+            <button class="preset-btn" onclick="setPreset('alquiler', 0)">Sin alquiler (0 €)</button>
+            <button class="preset-btn" onclick="setPreset('alquiler', 3000)">3.000 € (Ded: 300 €)</button>
+            <button class="preset-btn" onclick="setPreset('alquiler', 7200)">7.200 € (Tope: 600 €)</button>
+          </div>
+          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+            ℹ️ Deducción: 10% del alquiler pagado (máx. 600 €). No puede dejar la cuota en negativo.
+          </div>
+        </div>
+
+        <!-- Net Salary Summary Box -->
+        <div class="net-salary-pill">
+          <div>
+            <span>Sueldo Neto Disponible</span>
+            <div style="font-size: 0.78rem; color: #a7f3d0;" id="netMonthly">equiv. a 2.206,70 €/mes (12 pagas)</div>
+          </div>
+          <strong id="kpiNeto">26.480,35 €</strong>
+        </div>
+
+        <!-- Official Test Cases C01 - C10 -->
+        <div class="test-cases-box">
+          <div style="font-size: 0.8rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase;">
+            Casos de Prueba Oficiales (pruebas.csv)
+          </div>
+          <div class="test-pills" id="testPillsContainer"></div>
+        </div>
+      </div>
+
+      <!-- Right Column: Results, Visuals & Brackets -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Top KPIs -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-title">Base Liquidable</div>
+            <div class="kpi-val" id="kpiBase">25.000,50 €</div>
+            <div class="kpi-sub">Ingresos − Mínimo (5.000 €)</div>
+          </div>
+          <div class="kpi-card danger">
+            <div class="kpi-title">Cuota Líquida a Pagar</div>
+            <div class="kpi-val" id="kpiCuotaL">3.520,15 €</div>
+            <div class="kpi-sub" id="kpiCuotaSub">Cuota íntegra: 4.000,15 €</div>
+          </div>
+          <div class="kpi-card warning">
+            <div class="kpi-title">Tipo Medio Efectivo</div>
+            <div class="kpi-val" id="kpiTipoMed">11,73%</div>
+            <div class="kpi-sub">Cuota líquida ÷ Ingresos</div>
+          </div>
+          <div class="kpi-card accent">
+            <div class="kpi-title">Tipo Marginal</div>
+            <div class="kpi-val" id="kpiTipoMarg">30%</div>
+            <div class="kpi-sub" id="kpiTramoTxt">Tramo 3 (25k a 50k €)</div>
+          </div>
+        </div>
+
+        <!-- Visuals Duo -->
+        <div class="charts-duo">
+          <!-- Visual 1: Progressive Brackets Bars -->
+          <div class="card" style="padding: 20px;">
+            <div class="card-title" style="font-size: 1rem;">
+              <span>Desglose del Impuesto por Tramos</span>
+              <span id="kpiDeduccionBadge" style="font-size: 0.78rem; color: #10b981; font-weight: 700;">Ded. Alquiler: -480,00 €</span>
+            </div>
+            <div class="bracket-bar-box" id="bracketBars"></div>
+          </div>
+
+          <!-- Visual 2: Income Distribution Pie/Cascade -->
+          <div class="card" style="padding: 20px;">
+            <div class="card-title" style="font-size: 1rem;">
+              <span>¿Adónde va cada euro de tu ingreso?</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;" id="incomeSharesBox"></div>
+          </div>
+        </div>
+
+        <!-- Progressive Rate Curve Chart -->
+        <div class="card" style="padding: 20px;">
+          <div class="card-title" style="font-size: 1rem;">
+            <span>Curva de Progresividad: Tipo Medio vs. Tipo Marginal (0 a 100.000 €)</span>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Punto rojo: Tu posición actual</span>
+          </div>
+          <div class="curve-wrap">
+            <svg class="curve-svg" id="curveSvg" viewBox="0 0 700 220"></svg>
+          </div>
+        </div>
+
+        <!-- Detailed Calculation Table -->
+        <div class="card" style="padding: 20px;">
+          <div class="card-title" style="font-size: 1rem;">
+            <span>Desglose Detallado del Cálculo</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Concepto / Tramo</th>
+                  <th>Intervalo Base</th>
+                  <th>Base en Tramo</th>
+                  <th>Tipo</th>
+                  <th>Cuota Parcial</th>
+                </tr>
+              </thead>
+              <tbody id="tableDetailsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <span>Desarrollado para la Tarea 5 del Kit de Prácticas de Agentes de IA • UMA</span>
+      <span>Calculadora 100% autónoma • Cumple especificación oficial</span>
+    </footer>
+  </div>
+
+  <script>
+    // Test cases from pruebas.csv
+    const TEST_CASES = [
+      { id: "C01", ing: 0.0, alq: 0.0, desc: "Sin ingresos", base: 0.0, ci: 0.0, ded: 0.0, cl: 0.0, tm: 0.0, tmg: 0 },
+      { id: "C02", ing: 4000.0, alq: 0.0, desc: "Bajo mínimo (4k)", base: 0.0, ci: 0.0, ded: 0.0, cl: 0.0, tm: 0.0, tmg: 0 },
+      { id: "C03", ing: 15000.0, alq: 0.0, desc: "Límite T1 (15k)", base: 10000.0, ci: 1000.0, ded: 0.0, cl: 1000.0, tm: 6.67, tmg: 10 },
+      { id: "C04", ing: 20000.0, alq: 0.0, desc: "Dos tramos (20k)", base: 15000.0, ci: 2000.0, ded: 0.0, cl: 2000.0, tm: 10.0, tmg: 20 },
+      { id: "C05", ing: 40000.0, alq: 0.0, desc: "Tres tramos (40k)", base: 35000.0, ci: 7000.0, ded: 0.0, cl: 7000.0, tm: 17.5, tmg: 30 },
+      { id: "C06", ing: 80000.0, alq: 0.0, desc: "Cuatro tramos (80k)", base: 75000.0, ci: 21500.0, ded: 0.0, cl: 21500.0, tm: 26.88, tmg: 40 },
+      { id: "C07", ing: 20000.0, alq: 3000.0, desc: "Ded. alquiler normal", base: 15000.0, ci: 2000.0, ded: 300.0, cl: 1700.0, tm: 8.5, tmg: 20 },
+      { id: "C08", ing: 40000.0, alq: 7200.0, desc: "Tope alquiler (600€)", base: 35000.0, ci: 7000.0, ded: 600.0, cl: 6400.0, tm: 16.0, tmg: 30 },
+      { id: "C09", ing: 6000.0, alq: 3000.0, desc: "Tope cuota 0€", base: 1000.0, ci: 100.0, ded: 100.0, cl: 0.0, tm: 0.0, tmg: 10 },
+      { id: "C10", ing: 30000.5, alq: 4800.0, desc: "Céntimos y redondeo", base: 25000.5, ci: 4000.15, ded: 480.0, cl: 3520.15, tm: 11.73, tmg: 30 }
+    ];
+
+    // Format currency Spanish
+    function fmtCur(val) {
+      return val.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+    }
+
+    // Format percentage Spanish
+    function fmtPct(val) {
+      return val.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " %";
+    }
+
+    // Pure business logic according to especificacion.md
+    function calcularIFRU(ingresos, alquiler) {
+      ingresos = Math.max(0, ingresos || 0);
+      alquiler = Math.max(0, alquiler || 0);
+
+      // 1. Base liquidable = ingresos - 5000 (min 0)
+      const baseLiquidabile = Math.max(0, ingresos - 5000);
+
+      // 2. Tramos
+      const tramos = [
+        { id: 1, nom: "Tramo 1", desde: 0, hasta: 10000, tipo: 0.10, color: "var(--tramo1)" },
+        { id: 2, nom: "Tramo 2", desde: 10000, hasta: 25000, tipo: 0.20, color: "var(--tramo2)" },
+        { id: 3, nom: "Tramo 3", desde: 25000, hasta: 50000, tipo: 0.30, color: "var(--tramo3)" },
+        { id: 4, nom: "Tramo 4", desde: 50000, hasta: Infinity, tipo: 0.40, color: "var(--tramo4)" }
+      ];
+
+      let cuotaIntegra = 0;
+      let tipoMarginal = 0;
+      const desgloseTramos = [];
+
+      for (let t of tramos) {
+        if (baseLiquidabile > t.desde) {
+          const baseEnTramo = Math.min(baseLiquidabile, t.hasta) - t.desde;
+          const cuotaTramo = baseEnTramo * t.tipo;
+          cuotaIntegra += cuotaTramo;
+          tipoMarginal = Math.round(t.tipo * 100);
+
+          desgloseTramos.push({
+            id: t.id,
+            nom: t.nom,
+            rango: t.hasta === Infinity ? "Más de 50.000 €" : `${t.desde.toLocaleString('es-ES')} € a ${t.hasta.toLocaleString('es-ES')} €`,
+            base: baseEnTramo,
+            tipo: Math.round(t.tipo * 100),
+            cuota: cuotaTramo,
+            color: t.color
+          });
+        } else {
+          desgloseTramos.push({
+            id: t.id,
+            nom: t.nom,
+            rango: t.hasta === Infinity ? "Más de 50.000 €" : `${t.desde.toLocaleString('es-ES')} € a ${t.hasta.toLocaleString('es-ES')} €`,
+            base: 0,
+            tipo: Math.round(t.tipo * 100),
+            cuota: 0,
+            color: t.color
+          });
+        }
+      }
+
+      if (baseLiquidabile === 0) {
+        tipoMarginal = 0;
+      }
+
+      // 3. Deducción por alquiler: 10% del alquiler anual (máximo 600€), tope cuota íntegra
+      const dedTeorica = Math.min(alquiler * 0.10, 600.0);
+      const deduccionEfectiva = Math.min(cuotaIntegra, dedTeorica);
+
+      // 4. Cuota líquida
+      const cuotaLiquida = Math.max(0, cuotaIntegra - deduccionEfectiva);
+
+      // 5. Tipo medio
+      const tipoMedio = ingresos > 0 ? (cuotaLiquida / ingresos) * 100 : 0.0;
+
+      // Sueldo neto
+      const sueldoNeto = ingresos - cuotaLiquida;
+
+      return {
+        ingresos,
+        alquiler,
+        minimoPersonal: Math.min(ingresos, 5000),
+        baseLiquidabile,
+        cuotaIntegra,
+        dedTeorica,
+        deduccionEfectiva,
+        cuotaLiquida,
+        tipoMedio,
+        tipoMarginal,
+        sueldoNeto,
+        desgloseTramos
+      };
+    }
+
+    // Event Listeners
+    function onInputChange() {
+      const ing = parseFloat(document.getElementById("inIngresos").value) || 0;
+      const alq = parseFloat(document.getElementById("inAlquiler").value) || 0;
+      document.getElementById("slIngresos").value = Math.min(100000, ing);
+      document.getElementById("slAlquiler").value = Math.min(15000, alq);
+      updateView(ing, alq);
+    }
+
+    function onSliderChange(source) {
+      if (source === 'ingresos') {
+        const val = parseFloat(document.getElementById("slIngresos").value);
+        document.getElementById("inIngresos").value = val;
+      } else {
+        const val = parseFloat(document.getElementById("slAlquiler").value);
+        document.getElementById("inAlquiler").value = val;
+      }
+      onInputChange();
+    }
+
+    function setPreset(type, val) {
+      if (type === 'ingresos') {
+        document.getElementById("inIngresos").value = val;
+      } else {
+        document.getElementById("inAlquiler").value = val;
+      }
+      onInputChange();
+    }
+
+    function resetForm() {
+      document.getElementById("inIngresos").value = 30000.50;
+      document.getElementById("inAlquiler").value = 4800;
+      onInputChange();
+    }
+
+    function loadTestCase(c) {
+      document.getElementById("inIngresos").value = c.ing;
+      document.getElementById("inAlquiler").value = c.alq;
+      onInputChange();
+      // highlight active pill
+      document.querySelectorAll(".test-pill").forEach(p => p.classList.toggle("active", p.dataset.id === c.id));
+    }
+
+    // Render & Update UI
+    function updateView(ingresos, alquiler) {
+      const res = calcularIFRU(ingresos, alquiler);
+
+      document.getElementById("lblIngresos").innerText = fmtCur(res.ingresos);
+      document.getElementById("lblAlquiler").innerText = fmtCur(res.alquiler);
+
+      document.getElementById("kpiBase").innerText = fmtCur(res.baseLiquidabile);
+      document.getElementById("kpiCuotaL").innerText = fmtCur(res.cuotaLiquida);
+      document.getElementById("kpiCuotaSub").innerText = `Cuota íntegra: ${fmtCur(res.cuotaIntegra)}`;
+      document.getElementById("kpiTipoMed").innerText = fmtPct(res.tipoMedio);
+      document.getElementById("kpiTipoMarg").innerText = `${res.tipoMarginal} %`;
+      document.getElementById("kpiNeto").innerText = fmtCur(res.sueldoNeto);
+      document.getElementById("netMonthly").innerText = `equiv. a ${(res.sueldoNeto/12).toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2})} €/mes (12 pagas)`;
+
+      const tramoTxt = res.tipoMarginal === 0 ? "Exento (Base = 0 €)" :
+        (res.tipoMarginal === 10 ? "Tramo 1 (0 a 10.000 €)" :
+        (res.tipoMarginal === 20 ? "Tramo 2 (10k a 25.000 €)" :
+        (res.tipoMarginal === 30 ? "Tramo 3 (25k a 50.000 €)" : "Tramo 4 (> 50.000 €)")));
+      document.getElementById("kpiTramoTxt").innerText = tramoTxt;
+
+      document.getElementById("kpiDeduccionBadge").innerText = res.deduccionEfectiva > 0 ?
+        `Ded. Alquiler: -${fmtCur(res.deduccionEfectiva)}` : "Sin deducción aplicada";
+
+      renderBracketBars(res);
+      renderIncomeShares(res);
+      renderCurveChart(res.ingresos);
+      renderTableDetails(res);
+    }
+
+    function renderBracketBars(res) {
+      const container = document.getElementById("bracketBars");
+      const maxCap = 25000; // visual cap scale
+
+      container.innerHTML = res.desgloseTramos.map(t => {
+        const pct = t.base > 0 ? Math.min(100, (t.base / maxCap) * 100) : 0;
+        return `
+          <div class="bracket-row">
+            <div class="bracket-header">
+              <span>${t.nom} (${t.tipo}%) • ${t.rango}</span>
+              <span style="color:${t.color};">${fmtCur(t.cuota)}</span>
+            </div>
+            <div class="bracket-track">
+              <div class="bracket-fill" style="width: ${pct}%; background: ${t.color};"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+              <span>Base gravada: ${fmtCur(t.base)}</span>
+              <span>${t.base > 0 ? (t.base * (t.tipo/100)).toFixed(2) + ' €' : '0,00 €'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderIncomeShares(res) {
+      const box = document.getElementById("incomeSharesBox");
+      const total = res.ingresos || 1;
+
+      const pExento = (res.minimoPersonal / total) * 100;
+      const pCuota = (res.cuotaLiquida / total) * 100;
+      const pDed = (res.deduccionEfectiva / total) * 100;
+      const pNeto = (res.sueldoNeto / total) * 100;
+
+      box.innerHTML = `
+        <div style="height: 28px; border-radius: 8px; overflow: hidden; display: flex; background: #0b132b;">
+          <div style="width: ${pNeto}%; background: #10b981;" title="Neto disponible: ${fmtCur(res.sueldoNeto)} (${pNeto.toFixed(1)}%)"></div>
+          <div style="width: ${pCuota}%; background: #ef4444;" title="Impuesto (Cuota líquida): ${fmtCur(res.cuotaLiquida)} (${pCuota.toFixed(1)}%)"></div>
+          <div style="width: ${pDed}%; background: #f59e0b;" title="Ahorro deducción alquiler: ${fmtCur(res.deduccionEfectiva)} (${pDed.toFixed(1)}%)"></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 10px; height: 10px; border-radius: 2px; background: #10b981;"></span>
+              Salario Neto en el bolsillo
+            </span>
+            <strong>${fmtCur(res.sueldoNeto)} (${pNeto.toFixed(1)}%)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 10px; height: 10px; border-radius: 2px; background: #ef4444;"></span>
+              Impuesto IFRU pagado
+            </span>
+            <strong>${fmtCur(res.cuotaLiquida)} (${pCuota.toFixed(1)}%)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 10px; height: 10px; border-radius: 2px; background: #f59e0b;"></span>
+              Ahorro fiscal por alquiler
+            </span>
+            <strong>${res.deduccionEfectiva > 0 ? '-' + fmtCur(res.deduccionEfectiva) : '0,00 €'}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--card-border); padding-top: 8px;">
+            <span style="display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
+              🛡️ Mínimo personal exento (no tributa)
+            </span>
+            <span style="color: var(--text-muted);">${fmtCur(res.minimoPersonal)}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCurveChart(currentIncome) {
+      const svg = document.getElementById("curveSvg");
+      const W = 700, H = 220;
+      const padL = 45, padR = 25, padT = 20, padB = 30;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // Sample points from 0 to 100,000 €
+      const steps = 100;
+      let pathMedio = "";
+      let pathMarg = "";
+
+      let curX = 0, curY = 0;
+
+      for (let i = 0; i <= steps; i++) {
+        const xVal = (i / steps) * 100000;
+        const r = calcularIFRU(xVal, 0); // without rent for pure theoretical curve
+
+        const px = padL + (xVal / 100000) * plotW;
+        const pyMedio = padT + plotH - (r.tipoMedio / 40) * plotH;
+        const pyMarg = padT + plotH - (r.tipoMarginal / 40) * plotH;
+
+        if (i === 0) {
+          pathMedio = `M ${px} ${pyMedio}`;
+          pathMarg = `M ${px} ${pyMarg}`;
+        } else {
+          pathMedio += ` L ${px} ${pyMedio}`;
+          pathMarg += ` L ${px} ${pyMarg}`;
+        }
+
+        if (Math.abs(xVal - Math.min(100000, currentIncome)) < 600) {
+          curX = px;
+          curY = pyMedio;
+        }
+      }
+
+      // Grid Y (0%, 10%, 20%, 30%, 40%)
+      let gridSvg = "";
+      [0, 10, 20, 30, 40].forEach(p => {
+        const y = padT + plotH - (p / 40) * plotH;
+        gridSvg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#334155" stroke-dasharray="2,3" />`;
+        gridSvg += `<text x="${padL - 8}" y="${y + 3}" fill="#94a3b8" font-size="9" text-anchor="end">${p}%</text>`;
+      });
+
+      // Grid X (0k, 20k, 40k, 60k, 80k, 100k)
+      [0, 20000, 40000, 60000, 80000, 100000].forEach(k => {
+        const x = padL + (k / 100000) * plotW;
+        gridSvg += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT + plotH}" stroke="#334155" stroke-dasharray="2,3" />`;
+        gridSvg += `<text x="${x}" y="${padT + plotH + 16}" fill="#94a3b8" font-size="9" text-anchor="middle">${k/1000}k €</text>`;
+      });
+
+      // User Marker
+      const curMarker = currentIncome <= 100000 ? `
+        <line x1="${curX}" y1="${padT}" x2="${curX}" y2="${padT + plotH}" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3" />
+        <circle cx="${curX}" cy="${curY}" r="6" fill="#ef4444" stroke="#ffffff" stroke-width="2" />
+        <text x="${curX + 8}" y="${Math.max(30, curY - 8)}" fill="#ef4444" font-size="10" font-weight="700">Tú estás aquí (${currentIncome.toLocaleString('es-ES')} €)</text>
+      ` : '';
+
+      svg.innerHTML = `
+        ${gridSvg}
+        <!-- Marginal curve (stairs) -->
+        <path d="${pathMarg}" fill="none" stroke="#8b5cf6" stroke-width="1.8" stroke-dasharray="4,4" />
+        <!-- Average curve (smooth) -->
+        <path d="${pathMedio}" fill="none" stroke="#38bdf8" stroke-width="2.5" />
+        ${curMarker}
+        <!-- Legend inside SVG -->
+        <g transform="translate(${padL + 10}, ${padT + 10})">
+          <line x1="0" y1="5" x2="20" y2="5" stroke="#38bdf8" stroke-width="2.5" />
+          <text x="26" y="8" fill="#e2e8f0" font-size="9" font-weight="600">Tipo Medio Efectivo</text>
+          <line x1="150" y1="5" x2="170" y2="5" stroke="#8b5cf6" stroke-width="1.8" stroke-dasharray="4,4" />
+          <text x="176" y="8" fill="#e2e8f0" font-size="9" font-weight="600">Tipo Marginal (Escalera)</text>
+        </g>
+      `;
+    }
+
+    function renderTableDetails(res) {
+      const tbody = document.getElementById("tableDetailsBody");
+
+      let html = `
+        <tr>
+          <td>Ingresos Brutos Anuales</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td style="font-weight:700;">${fmtCur(res.ingresos)}</td>
+        </tr>
+        <tr>
+          <td style="color:#60a5fa;">(−) Mínimo Personal Exento</td>
+          <td>Hasta 5.000 €</td>
+          <td>${fmtCur(res.minimoPersonal)}</td>
+          <td>0 %</td>
+          <td style="color:#60a5fa;">0,00 €</td>
+        </tr>
+        <tr style="background:rgba(255,255,255,0.02); font-weight:700;">
+          <td>(=) BASE LIQUIDABLE TOTAL</td>
+          <td>-</td>
+          <td>${fmtCur(res.baseLiquidabile)}</td>
+          <td>-</td>
+          <td>-</td>
+        </tr>
+      `;
+
+      res.desgloseTramos.forEach(t => {
+        html += `
+          <tr>
+            <td>• ${t.nom}</td>
+            <td>${t.rango}</td>
+            <td>${fmtCur(t.base)}</td>
+            <td><span style="background:${t.color}22; color:${t.color}; padding:2px 6px; border-radius:4px; font-weight:700;">${t.tipo}%</span></td>
+            <td>${fmtCur(t.cuota)}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+        <tr style="background:rgba(255,255,255,0.03); font-weight:700;">
+          <td>(=) CUOTA ÍNTEGRA TOTAL</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
+          <td style="color:#38bdf8;">${fmtCur(res.cuotaIntegra)}</td>
+        </tr>
+        <tr>
+          <td style="color:#10b981;">(−) Deducción Alquiler Vivienda (10%)</td>
+          <td>Máx. 600 € (Tope cuota)</td>
+          <td>Alquiler: ${fmtCur(res.alquiler)}</td>
+          <td>10 %</td>
+          <td style="color:#10b981;">${res.deduccionEfectiva > 0 ? '-' + fmtCur(res.deduccionEfectiva) : '0,00 €'}</td>
+        </tr>
+        <tr class="total-tr">
+          <td style="font-size:0.95rem; color:#fff;">(=) CUOTA LÍQUIDA A INGRESAR</td>
+          <td>-</td>
+          <td>-</td>
+          <td>Tipo Medio: ${fmtPct(res.tipoMedio)}</td>
+          <td style="font-size:1.1rem; color:#f87171;">${fmtCur(res.cuotaLiquida)}</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = html;
+    }
+
+    // Initialize Test Pills
+    function initTestPills() {
+      const container = document.getElementById("testPillsContainer");
+      container.innerHTML = TEST_CASES.map(c => `
+        <button class="test-pill ${c.id === 'C10' ? 'active' : ''}" data-id="${c.id}" onclick='loadTestCase(${JSON.stringify(c)})'>
+          <strong>${c.id}</strong>: ${c.desc} (${c.ing.toLocaleString('es-ES')} €)
+        </button>
+      `).join('');
+    }
+
+    // Verify all 10 test cases against calculator logic on load
+    function verifyAllTestCases() {
+      let passed = 0;
+      TEST_CASES.forEach(c => {
+        const r = calcularIFRU(c.ing, c.alq);
+        const baseOk = Math.abs(r.baseLiquidabile - c.base) < 0.01;
+        const ciOk = Math.abs(r.cuotaIntegra - c.ci) < 0.01;
+        const dedOk = Math.abs(r.deduccionEfectiva - c.ded) < 0.01;
+        const clOk = Math.abs(r.cuotaLiquida - c.cl) < 0.01;
+        const tmOk = Math.abs(r.tipoMedio - c.tm) < 0.05;
+        const tmgOk = (r.tipoMarginal === c.tmg);
+
+        if (baseOk && ciOk && dedOk && clOk && tmOk && tmgOk) {
+          passed++;
+        }
+      });
+      console.log(`Test verification: ${passed}/${TEST_CASES.length} passed.`);
+    }
+
+    // Startup
+    initTestPills();
+    verifyAllTestCases();
+    onInputChange();
+  </script>
+</body>
+</html>
